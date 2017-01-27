@@ -1,0 +1,17 @@
+extend ../layouts/embed
+
+append variables
+	- var desk= 'editoria';
+	- var pageTitle= 'nome do especial';
+	- var rootUrl= 'http://arte.folha.com.br';
+	- var pageDescription= 'description';
+	- var pageKeywords= 'keywords';
+	- var pageOgpTitle= pageTitle;
+	- var pageOgpType= 'article';
+	- var pageOgpImage= rootUrl + '/images/image-social.png';
+	- var pageOgpDescription= pageDescription;
+
+block content
+		#chart
+
+		script(src="js/main-cem-anos-do-classico.js")
