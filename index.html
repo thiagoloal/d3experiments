@@ -1,0 +1,126 @@
+
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8">
+		<title>D3: Force layout</title>
+		<script src="https://d3js.org/d3.v3.min.js"></script>
+		<style type="text/css">
+			/* No style rules here yet */
+		</style>
+		<link rel="stylesheet" href="http://arte.folha.uol.com.br/library/folhastyle/2.0/css/folhastyle-min.css">
+	</head>
+	<body>
+	<h1>Resultados</h1>
+	<script src="//d3js.org/d3.v3.min.js"></script>
+	<script src="https://code.jquery.com/jquery-3.1.1.min.js"></script>
+	
+	<script>
+
+	var width = 960,
+		height = 500,
+		foci ={
+			CORINTHIANS:
+			{
+				x: 150,
+				y: 150,
+				color:'#444'
+			},
+			PALMEIRAS:{
+				x: 500,
+				y: 150,
+				color:'#0f0'
+			},
+			empate:{
+				x: 800,
+				y: 150,
+				color:'#ccc'
+			}
+			};
+	var svg = d3.select("body").append("svg")
+		.attr("width", width)
+		.attr("height", height);
+
+
+function load(nodes){
+	var fill = ['#333','#f00'];
+
+
+	var force = d3.layout.force()
+		.nodes(nodes)
+		.links([])
+		.gravity(0)
+		.size([width, height])
+		.on("tick", tick);
+
+	var node = svg.selectAll("circle");
+	node = node.data(nodes);
+	node.enter().append("circle")
+		.attr("class", "node")
+		.attr("cx", function(d) { return d.x; })
+		.attr("cy", function(d) { return d.y; })
+		.attr("r", 4)
+		.style("fill", function(d) { return foci[d.winner].color; })
+		.call(force.drag);
+	force.start();
+	function tick(e) {
+	  var k = .6 * e.alpha;
+
+	  // Push nodes toward their designated focus.
+	  nodes.forEach(function(o, i) {
+		o.y += (foci[o.winner].y - o.y) * k;
+		o.x += (foci[o.winner].x - o.x) * k;
+	  });
+
+	  node
+		  .attr("cx", function(d) { return d.x; })
+		  .attr("cy", function(d) { return d.y; });
+	}
+}
+
+
+function score (score, t1, t2) {
+	const firstResult = parseInt(score.split('x')[0]);
+	const second = parseInt(score.split('x')[1]);
+
+	if (firstResult>second) {
+		return t1;
+	}else if (firstResult === second) {
+		return 'empate';
+	}else{
+		return t2;
+	}
+}
+
+
+
+
+
+$(document).ready(() => {
+
+
+		const url = 'https://spreadsheets.google.com/feeds/list/1z3KFpyECed4U03L4gHqQLtNjspI0uCPft4t7gyHNWf8/1/public/values?alt=json';
+		const allGames = [];
+		d3.json(url, (err, data) => {
+			$(data.feed.entry).each((index, el) => {
+				const t1 =`${el.gsx$teamone.$t.split(',')[1] ? el.gsx$teamone.$t.split(',')[0] : el.gsx$teamone.$t}`;
+				const t2 =`${el.gsx$teamtwo.$t.split(',')[1] ? el.gsx$teamtwo.$t.split(',')[0] : el.gsx$teamtwo.$t}`;
+				const game = {
+					id:  index,
+					score: el.gsx$score.$t,
+					team_one: t1,
+					team_two: t2,
+					winner: score(el.gsx$score.$t, t1,t2)
+				};
+				allGames.push(game);
+			});
+			window.games = allGames;
+			load(allGames);
+		});
+	console.log(fullNames);
+});
+
+
+	</script>
+	</body>
+</html>
