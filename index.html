@@ -1,126 +1,104 @@
-
 <!DOCTYPE html>
-<html lang="en">
+<html>
 	<head>
-		<meta charset="utf-8">
-		<title>D3: Force layout</title>
-		<script src="https://d3js.org/d3.v3.min.js"></script>
-		<style type="text/css">
-			/* No style rules here yet */
+		<meta charset="utf-8" />
+		<meta http-equiv="X-UA-Compatible" content="IE=edge"/>
+		<title>D3 v4 - force layout</title>
+		<style>
+			#graph {
+				width: 600px;
+				height: 300px;
+			}
+			#graph svg{
+				border: 1px solid #000;
+			}
+			#graph svg circle{
+				fill:#f00;
+			}
 		</style>
-		<link rel="stylesheet" href="http://arte.folha.uol.com.br/library/folhastyle/2.0/css/folhastyle-min.css">
 	</head>
 	<body>
-	<h1>Resultados</h1>
-	<script src="//d3js.org/d3.v3.min.js"></script>
-	<script src="https://code.jquery.com/jquery-3.1.1.min.js"></script>
-	
-	<script>
+		<div id="graph"></div>
+		<script src="//cdnjs.cloudflare.com/ajax/libs/d3/4.1.1/d3.min.js"></script>
+		<script>
+			!(function(){
+				var width, height;
+				var chartWidth, chartHeight;
+				var margin;
+				var svg = d3.select("#graph").append("svg");
+				main();
+				function main() {
+					var range = 100
+					var data = d3.range(0, range).map(function(d){ return {label: "l"+d ,r:4}});
+					window.data = data;
+					setSize(data)
+					drawChart(data)
+				}
+				function setSize(data) {
+					width = document.querySelector("#graph").clientWidth
+					height = document.querySelector("#graph").clientHeight
+					margin = {top:0, left:0, bottom:0, right:0 }
+					chartWidth = width - (margin.left+margin.right)
+					chartHeight = height - (margin.top+margin.bottom)
+					svg
+						.attr("width", width)
+						.attr("height", height)
+				}
+				function drawChart(data) {
+					var node = svg.selectAll("circle")
+						.data(data)
+						.enter().append("circle")
+						.attr("r", function(d){  return d.r })
+						.call(d3.drag()
+							.on("start", dragstarted)
+							.on("drag", dragged)
+							.on("end", dragended));
 
-	var width = 960,
-		height = 500,
-		foci ={
-			CORINTHIANS:
-			{
-				x: 150,
-				y: 150,
-				color:'#444'
-			},
-			PALMEIRAS:{
-				x: 500,
-				y: 150,
-				color:'#0f0'
-			},
-			empate:{
-				x: 800,
-				y: 150,
-				color:'#ccc'
-			}
-			};
-	var svg = d3.select("body").append("svg")
-		.attr("width", width)
-		.attr("height", height);
-
-
-function load(nodes){
-	var fill = ['#333','#f00'];
-
-
-	var force = d3.layout.force()
-		.nodes(nodes)
-		.links([])
-		.gravity(0)
-		.size([width, height])
-		.on("tick", tick);
-
-	var node = svg.selectAll("circle");
-	node = node.data(nodes);
-	node.enter().append("circle")
-		.attr("class", "node")
-		.attr("cx", function(d) { return d.x; })
-		.attr("cy", function(d) { return d.y; })
-		.attr("r", 4)
-		.style("fill", function(d) { return foci[d.winner].color; })
-		.call(force.drag);
-	force.start();
-	function tick(e) {
-	  var k = .6 * e.alpha;
-
-	  // Push nodes toward their designated focus.
-	  nodes.forEach(function(o, i) {
-		o.y += (foci[o.winner].y - o.y) * k;
-		o.x += (foci[o.winner].x - o.x) * k;
-	  });
-
-	  node
-		  .attr("cx", function(d) { return d.x; })
-		  .attr("cy", function(d) { return d.y; });
-	}
-}
-
-
-function score (score, t1, t2) {
-	const firstResult = parseInt(score.split('x')[0]);
-	const second = parseInt(score.split('x')[1]);
-
-	if (firstResult>second) {
-		return t1;
-	}else if (firstResult === second) {
-		return 'empate';
-	}else{
-		return t2;
-	}
-}
+					var simulation = d3.forceSimulation(node)
+						.force("collide",d3.forceCollide(6))
+						.force("a", d3.forceManyBody().strength(-8))
+						.force("pal", d3.forceCenter(chartWidth / 4, chartHeight / 2))
+						.force("filt", function(d) {console.log(d)})
+						.force("y", d3.forceY(0))
+						.force("x", d3.forceX(0));
 
 
 
+					var ticked = function() {
+						node
+							.attr("cx", function(d) { return d.x; })
+							.attr("cy", function(d) { return d.y; });
+					}
+					simulation
+						.nodes(data, function(d) { console.log(d)}  )
+						.on("tick", ticked);
 
 
-$(document).ready(() => {
+					function dragstarted(d) {
+						// if (!d3.event.active) simulation.alphaTarget(1).restart();
+						// d.fx = d.x;
+						// d.fy = d.y;
+					}
+					function dragged(d) {
+						// d.fx = d3.event.x;
+						// d.fy = d3.event.y;
+					}
+					function dragended(d) {
+						// if (!d3.event.active) simulation.alphaTarget(0);
+						// d.fx = null;
+						// d.fy = null;
+					}
+					function filt(force, filter) {
+						var init = force.initialize;
+						console.log(filter)
+						// pickyForce.initialize = function(node) {
+						//     // Filter subset of nodes and delegate to saved initialization.
+						//     init(nodes.filter(function(n,i) { return i%2; }));  // Apply to every 2nd node
+						// }
+					}
 
-
-		const url = 'https://spreadsheets.google.com/feeds/list/1z3KFpyECed4U03L4gHqQLtNjspI0uCPft4t7gyHNWf8/1/public/values?alt=json';
-		const allGames = [];
-		d3.json(url, (err, data) => {
-			$(data.feed.entry).each((index, el) => {
-				const t1 =`${el.gsx$teamone.$t.split(',')[1] ? el.gsx$teamone.$t.split(',')[0] : el.gsx$teamone.$t}`;
-				const t2 =`${el.gsx$teamtwo.$t.split(',')[1] ? el.gsx$teamtwo.$t.split(',')[0] : el.gsx$teamtwo.$t}`;
-				const game = {
-					id:  index,
-					score: el.gsx$score.$t,
-					team_one: t1,
-					team_two: t2,
-					winner: score(el.gsx$score.$t, t1,t2)
-				};
-				allGames.push(game);
-			});
-			window.games = allGames;
-			load(allGames);
-		});
-	console.log(fullNames);
-});
-
-
-	</script>
+				}
+			}());
+		</script>
 	</body>
 </html>
